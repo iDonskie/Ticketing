@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eTickette - Workplace Issue Management & Ticket Portal</title>
+    <style>
+        :root {
+            --bg-color: #f4efe1;
+            --card-bg: #fffbf0;
+            --primary-maroon: #8b2626;
+            --primary-maroon-hover: #701e1e;
+            --text-main: #2c241d;
+            --text-muted: #6b5b52;
+            --border-color: #d1c4b2;
+            --tab-inactive: #c8bcab;
+            --input-bg: #ffffff;
+            --danger-red: #991b1b;
+            --danger-bg: #fef2f2;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        #authSection {
+            width: 100%;
+            max-width: 540px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .brand-logo-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-size: 2.4rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--primary-maroon);
+        }
+
+        .ticket-icon {
+            width: 36px;
+            height: 24px;
+            background-color: var(--primary-maroon);
+            border-radius: 4px;
+            position: relative;
+            display: inline-block;
+        }
+        .ticket-icon::before, .ticket-icon::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .ticket-icon::before { left: -5px; }
+        .ticket-icon::after { right: -5px; }
+
+        .brand-subtitle {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            text-transform: uppercase;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 0;
+        }
+
+        .auth-tab-btn {
+            flex: 1;
+            padding: 12px 10px;
+            background-color: var(--tab-inactive);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .auth-tab-btn.active {
+            background-color: var(--card-bg);
+            color: var(--primary-maroon);
+            border-bottom: 1px solid var(--card-bg);
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            border-top-right-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-maroon);
+        }
+
+        .btn-maroon {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-maroon);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-maroon:hover {
+            background-color: var(--primary-maroon-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-red);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .btn-danger:hover {
+            background-color: #7f1d1d;
+        }
+
+        .btn-action {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .btn-action:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-success {
+            background-color: #166534;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .btn-success:hover {
+            background-color: #14532d;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #dashboardSection {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            background: #f8fafc;
+            position: relative;
+            box-sizing: border-box;
+        }
+        .sidebar {
+            width: 260px;
+            background: #fff;
+            border-right: 1px solid #e2e8f0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .top-navbar {
+            height: 70px;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 40px;
+            position: relative;
+        }
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+        .nav-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: transparent;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .nav-btn.active {
+            background: #fef2f2;
+            color: var(--primary-maroon);
+        }
+        .panel {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .ticket-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            position: relative;
+        }
+
+        .notification-bell-container {
+            position: relative;
+        }
+        .bell-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .bell-btn:hover {
+            background: #e2e8f0;
+        }
+        .bell-badge {
+            background: var(--primary-maroon);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 800;
+        }
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 45px;
+            width: 340px;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .notification-dropdown-header {
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 800;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .notification-dropdown-body {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .notification-item {
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="authSection">
+        <div class="brand-header">
+            <div class="brand-logo-title">
+                <div class="ticket-icon"></div> ETIKETTE
+            </div>
+            <div class="brand-subtitle">WORKPLACE ISSUE MANAGEMENT & TICKET PORTAL</div>
+        </div>
+
+        <div class="auth-tabs">
+            <button id="tabBtnLogin" class="auth-tab-btn active" onclick="toggleAuthTab('login')">Login</button>
+            <button id="tabBtnRegister" class="auth-tab-btn" onclick="toggleAuthTab('register')">Register</button>
+            <button id="tabBtnReset" class="auth-tab-btn" onclick="toggleAuthTab('reset')">Forgot Password</button>
+        </div>
+
+        <div id="loginForm" class="auth-card">
+            <div class="form-group">
+                <label>Username</label>
+                <input id="loginUser" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input id="loginPass" type="password" placeholder="Enter password">
+            </div>
+            <button class="btn-maroon" onclick="login()">Authenticate Account</button>
+        </div>
+
+        <div id="registerForm" class="auth-card hidden">
+            <div class="form-group">
+                <label>Username</label>
+                <input id="regUser" placeholder="Min 3 characters (letters, numbers, _)">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input id="regPass" type="password" placeholder="Min 8 chars, at least 1 number">
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input id="regEmail" type="email" placeholder="name@company.com">
+            </div>
+
+            <div class="form-group">
+                <label>Verification Question #1</label>
+                <select id="regQ1">
+                    <option value="What is your favorite subject in school?">What is your favorite subject in school?</option>
+                    <option value="What was the name of your first pet?">What was the name of your first pet?</option>
+                    <option value="What is your favorite comfort food?">What is your favorite comfort food?</option>
+                    <option value="What was the first concert you attended?">What was the first concert you attended?</option>
+                    <option value="What is the title of your favorite movie?">What is the title of your favorite movie?</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Verification Answer #1</label>
+                <input id="regA1" placeholder="Answer #1">
+            </div>
+
+            <div class="form-group">
+                <label>Verification Question #2</label>
+                <select id="regQ2">
+                    <option value="What was the name of your elementary school?">What was the name of your elementary school?</option>
+                    <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                    <option value="What street did you grow up on?">What street did you grow up on?</option>
+                    <option value="In what city were your parents born?">In what city were your parents born?</option>
+                    <option value="What was your childhood nickname?">What was your childhood nickname?</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Verification Answer #2</label>
+                <input id="regA2" placeholder="Answer #2">
+            </div>
+
+            <div class="form-group">
+                <label>Verification Question #3</label>
+                <select id="regQ3">
+                    <option value="What was the make of your first car?">What was the make of your first car?</option>
+                    <option value="In what city did your parents meet?">In what city did your parents meet?</option>
+                    <option value="What was the name of your first employer?">What was the name of your first employer?</option>
+                    <option value="What was the name of your favorite teacher?">What was the name of your favorite teacher?</option>
+                    <option value="What is your favorite vacation spot?">What is your favorite vacation spot?</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Verification Answer #3</label>
+                <input id="regA3" placeholder="Answer #3">
+            </div>
+
+            <button class="btn-maroon" onclick="register()">Register Account</button>
+        </div>
+
+        <div id="resetForm" class="auth-card hidden">
+            <div class="form-group">
+                <label>Username</label>
+                <input id="resetUser" placeholder="Enter your username">
+            </div>
+            <button class="btn-maroon" style="margin-bottom: 20px;" onclick="loadQuestion()">Load Security Question</button>
+
+            <div class="form-group">
+                <label>Security Question</label>
+                <div id="resetQDisplay" style="font-style: italic; color: var(--text-muted); padding: 8px 0;">(Load question using username above)</div>
+            </div>
+            <div class="form-group">
+                <label>Verification Answer</label>
+                <input id="resetAnswer" placeholder="Your secret answer">
+            </div>
+            <div class="form-group">
+                <label>Registered Email</label>
+                <input id="resetEmail" type="email" placeholder="Your account email">
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input id="resetNewPass" type="password" placeholder="Min 8 chars, at least 1 number">
+            </div>
+            <button class="btn-maroon" onclick="resetPassword()">Reset Password</button>
+        </div>
+    </div>
+
+    <div id="dashboardSection" class="hidden">
+        <div class="sidebar">
+            <div>
+                <h2 style="color: var(--primary-maroon); margin-top:0;">eTickette</h2>
+                <div style="padding: 12px; background: #fef2f2; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fee2e2;">
+                    <div style="font-weight: bold;" id="sessionUser">User</div>
+                    <div style="color: var(--primary-maroon); font-size: 0.85rem;" id="sessionRole">Role</div>
+                    <div style="color: #64748b; font-size: 0.75rem;">ID: <span id="sessionUserId"></span></div>
+                </div>
+
+                <nav>
+                    <button id="navView" class="nav-btn active" onclick="switchDashTab('view')">Tickets Overview</button>
+                    <button id="navCreate" class="nav-btn hidden" onclick="switchDashTab('create')">Create Ticket</button>
+                    <button id="navAssign" class="nav-btn hidden" onclick="switchDashTab('assign')">Admin Controls</button>
+                </nav>
+            </div>
+            <button style="width: 100%; padding: 10px; background: #fff5f5; color: var(--primary-maroon); border: 1px solid #feb2b2; border-radius: 6px; font-weight: bold; cursor: pointer;" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="main-container">
+            <div class="top-navbar">
+                <div class="notification-bell-container" id="notifBellWrapper">
+                    <button class="bell-btn" onclick="toggleNotificationDropdown()">
+                        Notifications <span class="bell-badge" id="notifCountBadge">0</span>
+                    </button>
+                    <div class="notification-dropdown hidden" id="notificationDropdown">
+                        <div class="notification-dropdown-header">
+                            <span>System Alerts</span>
+                            <span style="font-weight: normal; font-size: 0.75rem; cursor: pointer; color: var(--primary-maroon);" onclick="markAllAsRead()">Read all</span>
+                        </div>
+                        <div class="notification-dropdown-body" id="notificationDropdownList">
+                            <div style="padding: 12px; text-align: center; color: #64748b; font-size: 0.85rem;">No new notifications</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div id="tabView" class="panel">
+                    <h2>Tickets Overview</h2>
+                    <div id="ticketsListContainer" style="margin-top: 16px;"></div>
+                </div>
+
+                <div id="tabCreate" class="panel hidden">
+                    <h2>Create Ticket</h2>
+                    <div class="form-group"><label style="text-align:left;">Title (Min 5 characters)</label><input id="tickTitle" placeholder="Brief title of issue"></div>
+                    <div class="form-group"><label style="text-align:left;">Description (Min 15 characters, no gibberish)</label><textarea id="tickDesc" rows="5" placeholder="Detailed description of the workplace issue..."></textarea></div>
+                    <button class="btn-maroon" style="margin: 0; width: auto; padding: 10px 24px;" onclick="createTicket()">Submit Ticket</button>
+                </div>
+
+                <div id="tabAssign" class="panel hidden">
+                    <h2>Admin Controls</h2>
+                    <div class="form-group"><label style="text-align:left;">Select Ticket</label><select id="assignTickSelect"></select></div>
+                    <div class="form-group"><label style="text-align:left;">Select Developer</label><select id="devSelect"></select></div>
+                    <button class="btn-maroon" style="margin: 0 0 24px 0; width: auto; padding: 10px 24px;" onclick="assignTicket()">Assign Ticket</button>
+
+                    <h3 style="border-top: 1px solid #e2e8f0; padding-top: 20px;">Promote User Role</h3>
+                    <div class="form-group"><label style="text-align:left;">Select User</label><select id="promoteUserSelect"></select></div>
+                    <div class="form-group"><label style="text-align:left;">New Role</label><select id="promoteRole"><option value="Developer">Developer</option><option value="Admin">Admin</option></select></div>
+                    <button class="btn-maroon" style="margin: 0; width: auto; padding: 10px 24px;" onclick="promoteUser()">Promote User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let lastSeenTicketId = 0;
+
+        function toggleAuthTab(tab) {
+            document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+            document.getElementById('resetForm').classList.toggle('hidden', tab !== 'reset');
+
+            document.getElementById('tabBtnLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('tabBtnRegister').classList.toggle('active', tab === 'register');
+            document.getElementById('tabBtnReset').classList.toggle('active', tab === 'reset');
+        }
+
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('notifBellWrapper');
+            const dropdown = document.getElementById('notificationDropdown');
+            if (wrapper && !wrapper.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function markAllAsRead() {
+            if (!currentUser) return;
+            if (window._currentHighestTicketId) {
+                localStorage.setItem(`eTickette_lastSeen_${currentUser.id}`, window._currentHighestTicketId);
+                lastSeenTicketId = window._currentHighestTicketId;
+            }
+            const list = document.getElementById('notificationDropdownList');
+            list.innerHTML = '<div style="padding: 12px; text-align: center; color: #64748b; font-size: 0.85rem;">No new notifications</div>';
+            document.getElementById('notifCountBadge').textContent = '0';
+        }
+
+        async function loadQuestion() {
+            const username = document.getElementById('resetUser').value;
+            const res = await fetch('/api/get-question', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                document.getElementById('resetQDisplay').textContent = data.q1;
+            } else {
+                alert(data.error || "User not found");
+            }
+        }
+
+        async function register() {
+            const payload = {
+                username: document.getElementById('regUser').value,
+                password: document.getElementById('regPass').value,
+                email: document.getElementById('regEmail').value,
+                q1: document.getElementById('regQ1').value, a1: document.getElementById('regA1').value,
+                q2: document.getElementById('regQ2').value, a2: document.getElementById('regA2').value,
+                q3: document.getElementById('regQ3').value, a3: document.getElementById('regA3').value,
+            };
+
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) { alert(data.message); toggleAuthTab('login'); } else { alert(data.error); }
+        }
+
+        async function resetPassword() {
+            const payload = {
+                username: document.getElementById('resetUser').value,
+                email: document.getElementById('resetEmail').value,
+                answer: document.getElementById('resetAnswer').value,
+                new_password: document.getElementById('resetNewPass').value
+            };
+
+            const res = await fetch('/api/reset-password', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) { alert(data.message); toggleAuthTab('login'); } else { alert(data.error); }
+        }
+
+        async function login() {
+            const username = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
+
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (res.ok) { 
+                currentUser = data.user; 
+                const savedWatermark = localStorage.getItem(`eTickette_lastSeen_${currentUser.id}`);
+                lastSeenTicketId = savedWatermark ? parseInt(savedWatermark) : 0;
+                showDashboard(); 
+            } else { 
+                alert(data.error); 
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+
+            document.getElementById('sessionUser').textContent = currentUser.username;
+            document.getElementById('sessionRole').textContent = currentUser.role;
+            document.getElementById('sessionUserId').textContent = currentUser.id;
+
+            document.getElementById('navCreate').classList.toggle('hidden', currentUser.role !== 'Requestor' && currentUser.role !== 'Admin');
+            document.getElementById('navAssign').classList.toggle('hidden', currentUser.role !== 'Admin');
+
+            switchDashTab('view');
+        }
+
+        function logout() {
+            currentUser = null;
+            lastSeenTicketId = 0;
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            toggleAuthTab('login');
+        }
+
+        function switchDashTab(tabName) {
+            ['view', 'create', 'assign'].forEach(t => {
+                const panel = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+                const nav = document.getElementById('nav' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (panel) panel.classList.toggle('hidden', t !== tabName);
+                if (nav) nav.classList.toggle('active', t === tabName);
+            });
+
+            if (tabName === 'view') getTickets();
+            if (tabName === 'assign') loadAssignOptions();
+        }
+
+        async function createTicket() {
+            const title = document.getElementById('tickTitle').value.trim();
+            const description = document.getElementById('tickDesc').value.trim();
+
+            if (title.length < 5) {
+                alert("Ticket title must be at least 5 characters long.");
+                return;
+            }
+            if (description.length < 15) {
+                alert("Ticket description must be at least 15 characters long to provide sufficient detail.");
+                return;
+            }
+            const gibberishRegex = /(.)\1{4,}/;
+            if (gibberishRegex.test(title) || gibberishRegex.test(description)) {
+                alert("Invalid submission: Description or title contains excessive repeating characters or appears to be test/troll input.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/tickets', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        title: title,
+                        description: description,
+                        requestor_id: currentUser.id
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("Ticket created successfully!");
+                    document.getElementById('tickTitle').value = '';
+                    document.getElementById('tickDesc').value = '';
+                    switchDashTab('view');
+                } else {
+                    alert(data.error || "Failed to create ticket.");
+                }
+            } catch (err) {
+                console.error("Error submitting ticket:", err);
+                alert("A network error occurred while submitting the ticket.");
+            }
+        }
+
+        async function deleteTicket(ticketId) {
+            if (!confirm(`Are you sure you want to delete ticket #${ticketId}? This action cannot be undone.`)) {
+                return;
+            }
+
+            const res = await fetch(`/api/tickets/${ticketId}`, {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: currentUser.id, role: currentUser.role })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(data.message);
+                getTickets();
+            } else {
+                alert(data.error || "Failed to delete ticket.");
+            }
+        }
+
+        async function loadAssignOptions() {
+            const resT = await fetch('/api/tickets');
+            const tickets = await resT.json();
+            const tickSelect = document.getElementById('assignTickSelect');
+            tickSelect.innerHTML = '<option value="">-- Select Ticket --</option>';
+            
+            window._adminTicketsMap = {};
+            tickets.forEach(t => { 
+                if (t.status !== 'Resolved') {
+                    window._adminTicketsMap[t.id] = t;
+                    tickSelect.innerHTML += `<option value="${t.id}">#${t.id} - ${t.title} ${t.assigned_to ? '(Assigned #' + t.assigned_to + ')' : '(Unassigned)'}</option>`; 
+                }
+            });
+
+            const resD = await fetch('/api/developers');
+            const devs = await resD.json();
+            const devSelect = document.getElementById('devSelect');
+            devSelect.innerHTML = '<option value="">-- Select Developer --</option>';
+            devs.forEach(d => { devSelect.innerHTML += `<option value="${d.id}">${d.username} (ID: ${d.id})</option>`; });
+
+            const resU = await fetch('/api/users');
+            const users = await resU.json();
+            const userSelect = document.getElementById('promoteUserSelect');
+            userSelect.innerHTML = '<option value="">-- Select User --</option>';
+            users.forEach(u => { userSelect.innerHTML += `<option value="${u.id}">${u.username} (${u.role}) [ID: ${u.id}]</option>`; });
+        }
+
+        async function assignTicket() {
+            const ticketIdSelect = document.getElementById('assignTickSelect').value;
+            const developerIdSelect = document.getElementById('devSelect').value;
+
+            if (!ticketIdSelect || !developerIdSelect) {
+                alert("Please select both a ticket and a developer.");
+                return;
+            }
+
+            const ticketId = parseInt(ticketIdSelect);
+            const developerId = parseInt(developerIdSelect);
+            const ticketData = window._adminTicketsMap ? window._adminTicketsMap[ticketId] : null;
+
+            if (ticketData && ticketData.assigned_to) {
+                if (ticketData.assigned_to === developerId) {
+                    alert(`This ticket is already assigned to Developer #${developerId}.`);
+                    return;
+                }
+
+                const confirmReassign = confirm(`This ticket is already assigned to Developer #${ticketData.assigned_to}. Would you like to reassign this to Developer #${developerId}?`);
+                if (!confirmReassign) {
+                    return;
+                }
+            }
+
+            const res = await fetch('/api/tickets/assign', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ticketId, developerId })
+            });
+            const data = await res.json();
+            alert(data.message || "Ticket assigned successfully.");
+            switchDashTab('view');
+        }
+
+        async function promoteUser() {
+            const userId = parseInt(document.getElementById('promoteUserSelect').value);
+            const role = document.getElementById('promoteRole').value;
+            const res = await fetch('/api/users/role', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId, role })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            loadAssignOptions();
+        }
+
+        async function submitFixInline(ticketId) {
+            const feedbackInput = document.getElementById(`feedbackInput_${ticketId}`);
+            const feedback = feedbackInput ? feedbackInput.value.trim() : "";
+
+            if (!feedback) {
+                alert("Please enter details/feedback on what you did to fix this issue.");
+                return;
+            }
+
+            const res = await fetch('/api/tickets/submit-fix', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ticketId, feedback })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            getTickets();
+        }
+
+        async function verifyFix(ticketId, isResolved) {
+            const promptMsg = isResolved 
+                ? "Are you sure you want to verify and close this ticket as fully resolved?" 
+                : "Are you sure the problem still persists? This will send the ticket back to the developer.";
+            
+            if (!confirm(promptMsg)) return;
+
+            const res = await fetch('/api/tickets/verify', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ticketId, isResolved })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            getTickets();
+        }
+
+        async function getTickets() {
+            let endpoint = '/api/tickets';
+            if (currentUser.role === 'Requestor') endpoint = `/api/tickets/user/${currentUser.id}`;
+            else if (currentUser.role === 'Developer') endpoint = `/api/tickets/assigned/${currentUser.id}`;
+
+            const res = await fetch(endpoint);
+            const tickets = await res.json();
+            const container = document.getElementById('ticketsListContainer');
+            const dropdownList = document.getElementById('notificationDropdownList');
+            const notifBadge = document.getElementById('notifCountBadge');
+
+            container.innerHTML = '';
+            dropdownList.innerHTML = '';
+            let alertCount = 0;
+            let highestId = 0;
+
+            if (tickets.length === 0) {
+                container.innerHTML = '<p style="color: #64748b;">No tickets found.</p>';
+                dropdownList.innerHTML = '<div style="padding: 12px; text-align: center; color: #64748b; font-size: 0.85rem;">No new notifications</div>';
+                notifBadge.textContent = '0';
+                return;
+            }
+
+            tickets.forEach(ticket => {
+                if (ticket.id > highestId) highestId = ticket.id;
+
+                let statusColor = '#92400e'; // Open
+                if (ticket.status === 'In Progress') statusColor = '#2563eb';
+                else if (ticket.status === 'Pending Verification') statusColor = '#d97706';
+                else if (ticket.status === 'Resolved') statusColor = '#166534';
+                else if (ticket.status === 'Reopened') statusColor = '#dc2626';
+
+                if (currentUser.role === 'Requestor' && ticket.notifications && ticket.id > lastSeenTicketId) {
+                    alertCount++;
+                    dropdownList.innerHTML += `<div class="notification-item">${ticket.notifications}</div>`;
+                }
+
+                const canDelete = (currentUser.role === 'Admin') || (currentUser.role === 'Requestor' && ticket.requestor_id === currentUser.id && ticket.status === 'Open');
+                const canSubmitFix = currentUser.role === 'Developer' && ticket.assigned_to === currentUser.id && (ticket.status === 'In Progress' || ticket.status === 'Reopened');
+                const canVerify = currentUser.role === 'Requestor' && ticket.requestor_id === currentUser.id && ticket.status === 'Pending Verification';
+
+                const cardHTML = `
+                    <div class="ticket-card">
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; align-items: center;">
+                            <span>#${ticket.id} - ${ticket.title}</span>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <span style="color: ${statusColor}">${ticket.status}</span>
+                                ${canDelete ? `<button class="btn-danger" onclick="deleteTicket(${ticket.id})">Delete</button>` : ''}
+                            </div>
+                        </div>
+                        <p style="color: #475569; margin: 8px 0; white-space: pre-wrap;">${ticket.description}</p>
+                        
+                        ${ticket.resolution_feedback ? `<div style="margin-top: 6px; padding: 8px; background: #eff6ff; color: #1e40af; font-size: 0.85rem; border-radius: 4px; border-left: 3px solid #3b82f6;"><strong>Developer Feedback:</strong> ${ticket.resolution_feedback}</div>` : ''}
+
+                        ${canSubmitFix ? `
+                            <div style="margin-top: 12px; padding: 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;">
+                                <label style="margin-bottom: 4px; color: var(--primary-maroon);">Submit Resolution Report / Feedback</label>
+                                <textarea id="feedbackInput_${ticket.id}" rows="3" placeholder="Describe what was done to fix this issue...">${ticket.resolution_feedback || ''}</textarea>
+                                <button class="btn-action" style="margin-top: 8px;" onclick="submitFixInline(${ticket.id})">Send Fix to Requestor</button>
+                            </div>
+                        ` : ''}
+
+                        ${canVerify ? `
+                            <div style="margin-top: 12px; padding: 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px;">
+                                <div style="font-weight: bold; font-size: 0.85rem; color: #92400e; margin-bottom: 8px;">The developer has submitted a fix. Is this issue resolved?</div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-success" onclick="verifyFix(${ticket.id}, true)">Yes, Issue Resolved</button>
+                                    <button class="btn-danger" onclick="verifyFix(${ticket.id}, false)">No, Still Broken (Reopen)</button>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <div style="font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 6px; margin-top: 8px;">
+                            Requestor ID: ${ticket.requestor_id} | Assigned Developer: ${ticket.assigned_to ? '#' + ticket.assigned_to : 'Unassigned'}
+                        </div>
+                        ${ticket.notifications ? `<div style="margin-top: 6px; padding: 6px; background: #f0fdf4; color: #166534; font-size: 0.85rem; border-radius: 4px;">${ticket.notifications}</div>` : ''}
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHTML);
+            });
+
+            window._currentHighestTicketId = highestId;
+            notifBadge.textContent = alertCount;
+            if (alertCount === 0) {
+                dropdownList.innerHTML = '<div style="padding: 12px; text-align: center; color: #64748b; font-size: 0.85rem;">No new notifications</div>';
+            }
+        }
+    </script>
+</body>
+</html>
