@@ -297,6 +297,30 @@
             position: relative;
         }
 
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .filter-btn {
+            padding: 6px 14px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background: var(--primary-maroon);
+            color: white;
+            border-color: var(--primary-maroon);
+        }
+
         .notification-bell-container {
             position: relative;
         }
@@ -526,6 +550,16 @@
             <div class="main-content">
                 <div id="tabView" class="panel">
                     <h2>Tickets Overview</h2>
+
+                    <!-- Category / Status Filter Tabs -->
+                    <div class="filter-tabs">
+                        <button class="filter-btn active" onclick="setFilter('all', this)">All Tickets</button>
+                        <button class="filter-btn" onclick="setFilter('Open', this)">Open</button>
+                        <button class="filter-btn" onclick="setFilter('In Progress', this)">In Progress</button>
+                        <button class="filter-btn" onclick="setFilter('Pending Verification', this)">Pending Verification</button>
+                        <button class="filter-btn" onclick="setFilter('Resolved', this)">Resolved</button>
+                    </div>
+
                     <div id="ticketsListContainer" style="margin-top: 16px;"></div>
                 </div>
 
@@ -538,9 +572,20 @@
 
                 <div id="tabAssign" class="panel hidden">
                     <h2>Admin Controls</h2>
+
+                    <h3 style="margin-top:0;">Assign Ticket & Set Priority</h3>
                     <div class="form-group"><label style="text-align:left;">Select Ticket</label><select id="assignTickSelect"></select></div>
                     <div class="form-group"><label style="text-align:left;">Select Developer</label><select id="devSelect"></select></div>
-                    <button class="btn-maroon" style="margin: 0 0 24px 0; width: auto; padding: 10px 24px;" onclick="assignTicket()">Assign Ticket</button>
+                    <div class="form-group">
+                        <label style="text-align:left;">Set Urgency / Priority</label>
+                        <select id="prioritySelect">
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                            <option value="Urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <button class="btn-maroon" style="margin: 0 0 24px 0; width: auto; padding: 10px 24px;" onclick="assignTicket()">Apply Assignment & Priority</button>
 
                     <h3 style="border-top: 1px solid #e2e8f0; padding-top: 20px;">Promote User Role</h3>
                     <div class="form-group"><label style="text-align:left;">Select User</label><select id="promoteUserSelect"></select></div>
@@ -554,6 +599,8 @@
     <script>
         let currentUser = null;
         let lastSeenTicketId = 0;
+        let currentFilter = 'all';
+        let globalTicketsCache = [];
 
         function toggleAuthTab(tab) {
             document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
@@ -694,6 +741,13 @@
             if (tabName === 'assign') loadAssignOptions();
         }
 
+        function setFilter(statusFilter, btnElement) {
+            currentFilter = statusFilter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            renderTickets(globalTicketsCache);
+        }
+
         async function createTicket() {
             const title = document.getElementById('tickTitle').value.trim();
             const description = document.getElementById('tickDesc').value.trim();
@@ -766,7 +820,7 @@
             tickets.forEach(t => { 
                 if (t.status !== 'Resolved') {
                     window._adminTicketsMap[t.id] = t;
-                    tickSelect.innerHTML += `<option value="${t.id}">#${t.id} - ${t.title} ${t.assigned_to ? '(Assigned #' + t.assigned_to + ')' : '(Unassigned)'}</option>`; 
+                    tickSelect.innerHTML += `<option value="${t.id}">#${t.id} - ${t.title} [Priority: ${t.priority || 'Medium'}]</option>`;
                 }
             });
 
@@ -786,6 +840,7 @@
         async function assignTicket() {
             const ticketIdSelect = document.getElementById('assignTickSelect').value;
             const developerIdSelect = document.getElementById('devSelect').value;
+            const priorityVal = document.getElementById('prioritySelect').value;
 
             if (!ticketIdSelect || !developerIdSelect) {
                 alert("Please select both a ticket and a developer.");
@@ -807,6 +862,12 @@
                     return;
                 }
             }
+
+            await fetch('/api/tickets/priority', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ticketId, priority: priorityVal })
+            });
 
             const res = await fetch('/api/tickets/assign', {
                 method: 'PUT',
@@ -873,7 +934,11 @@
             else if (currentUser.role === 'Developer') endpoint = `/api/tickets/assigned/${currentUser.id}`;
 
             const res = await fetch(endpoint);
-            const tickets = await res.json();
+            globalTicketsCache = await res.json();
+            renderTickets(globalTicketsCache);
+        }
+
+        function renderTickets(tickets) {
             const container = document.getElementById('ticketsListContainer');
             const dropdownList = document.getElementById('notificationDropdownList');
             const notifBadge = document.getElementById('notifCountBadge');
@@ -883,6 +948,12 @@
             let alertCount = 0;
             let highestId = 0;
 
+            // Filter tickets based on selected category tab
+            const filteredTickets = tickets.filter(t => {
+                if (currentFilter === 'all') return true;
+                return t.status === currentFilter;
+            });
+
             if (tickets.length === 0) {
                 container.innerHTML = '<p style="color: #64748b;">No tickets found.</p>';
                 dropdownList.innerHTML = '<div style="padding: 12px; text-align: center; color: #64748b; font-size: 0.85rem;">No new notifications</div>';
@@ -890,28 +961,42 @@
                 return;
             }
 
+            if (filteredTickets.length === 0) {
+                container.innerHTML = `<p style="color: #64748b;">No tickets found in category: <strong>${currentFilter}</strong>.</p>`;
+            }
+
             tickets.forEach(ticket => {
                 if (ticket.id > highestId) highestId = ticket.id;
+                if (currentUser.role === 'Requestor' && ticket.notifications && ticket.id > lastSeenTicketId) {
+                    alertCount++;
+                    dropdownList.innerHTML += `<div class="notification-item">${ticket.notifications}</div>`;
+                }
+            });
 
+            filteredTickets.forEach(ticket => {
                 let statusColor = '#92400e'; // Open
                 if (ticket.status === 'In Progress') statusColor = '#2563eb';
                 else if (ticket.status === 'Pending Verification') statusColor = '#d97706';
                 else if (ticket.status === 'Resolved') statusColor = '#166534';
                 else if (ticket.status === 'Reopened') statusColor = '#dc2626';
 
-                if (currentUser.role === 'Requestor' && ticket.notifications && ticket.id > lastSeenTicketId) {
-                    alertCount++;
-                    dropdownList.innerHTML += `<div class="notification-item">${ticket.notifications}</div>`;
-                }
+                let priorityColor = '#64748b';
+                const priority = ticket.priority || 'Medium';
+                if (priority === 'Urgent') priorityColor = '#dc2626';
+                else if (priority === 'High') priorityColor = '#ea580c';
+                else if (priority === 'Medium') priorityColor = '#2563eb';
 
                 const canDelete = (currentUser.role === 'Admin') || (currentUser.role === 'Requestor' && ticket.requestor_id === currentUser.id && ticket.status === 'Open');
                 const canSubmitFix = currentUser.role === 'Developer' && ticket.assigned_to === currentUser.id && (ticket.status === 'In Progress' || ticket.status === 'Reopened');
                 const canVerify = currentUser.role === 'Requestor' && ticket.requestor_id === currentUser.id && ticket.status === 'Pending Verification';
 
                 const cardHTML = `
-                    <div class="ticket-card">
+                    <div class="ticket-card" style="border-left: 4px solid ${priorityColor};">
                         <div style="display: flex; justify-content: space-between; font-weight: bold; align-items: center;">
-                            <span>#${ticket.id} - ${ticket.title}</span>
+                            <div>
+                                <span>#${ticket.id} - ${ticket.title}</span>
+                                <span style="font-size: 0.75rem; background: ${priorityColor}; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">${priority}</span>
+                            </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <span style="color: ${statusColor}">${ticket.status}</span>
                                 ${canDelete ? `<button class="btn-danger" onclick="deleteTicket(${ticket.id})">Delete</button>` : ''}

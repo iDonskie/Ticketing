@@ -1,6 +1,13 @@
 import sqlite3
 import os
 
+def get_db_connection():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(base_dir, '..', 'tickets.db')
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
+
 def init_db():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(base_dir, '..', 'tickets.db')
@@ -32,18 +39,26 @@ def init_db():
             requestor_id INTEGER,
             assigned_to INTEGER,
             notifications TEXT DEFAULT '',
+            resolution_feedback TEXT DEFAULT '',
+            priority TEXT CHECK(priority IN ('Low', 'Medium', 'High', 'Urgent')) DEFAULT 'Medium',
             FOREIGN KEY(requestor_id) REFERENCES users(id),
             FOREIGN KEY(assigned_to) REFERENCES users(id)
         )
     ''')
 
-    # Safely add resolution_feedback column if it doesn't exist yet (preserves existing data)
-    try:
-        cursor.execute("ALTER TABLE tickets ADD COLUMN resolution_feedback TEXT DEFAULT '';")
-        conn.commit()
-    except sqlite3.OperationalError:
-        # Column already exists, safe to ignore
-        pass
+    # Safely inject missing columns if they don't exist yet in older DB files
+    columns_to_check = [
+        ("resolution_feedback", "TEXT DEFAULT ''"),
+        ("priority", "TEXT CHECK(priority IN ('Low', 'Medium', 'High', 'Urgent')) DEFAULT 'Medium'")
+    ]
+
+    for col_name, col_def in columns_to_check:
+        try:
+            cursor.execute(f"ALTER TABLE tickets ADD COLUMN {col_name} {col_def};")
+            conn.commit()
+        except sqlite3.OperationalError:
+            # Column already exists, safe to ignore
+            pass
 
     conn.commit()
     conn.close()
